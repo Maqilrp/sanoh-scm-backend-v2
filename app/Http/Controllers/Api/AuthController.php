@@ -63,7 +63,7 @@ class AuthController
             'access_token' => $token,
             'role' => $user->role,
             'bp_code' => $user->bp_code,
-            'name' => $user->partner->adr_line_1,
+            'name' => ($user->partner->adr_line_1 == null) ? $user->partner->bp_name : $user->partner->adr_line_1,
             'token_type' => 'Bearer'
         ]);
     }
