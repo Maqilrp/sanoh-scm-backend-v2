@@ -135,9 +135,9 @@ Route::middleware(['auth:sanctum','userRole:3']) ->group(function () {
     Route::get('purchasing/performance-report/index/{bp_code}',[ListingReportController::class, "index"])->name('index');
     Route::get('purchasing/performance-report/file/{filename}', [ListingReportController::class, 'getFile']);
     // Route for store Listing Report
-    Route::post('/createlistingreport3',[ListingReportController::class, "store"]);
+    Route::post('purchasing/performance-report/store',[ListingReportController::class, "store"]);
 
-    Route::get('/pohview3/{po_no}', [PrintController::class, 'poHeaderView']);
+    Route::get('purchasing/po/print/{po_no}', [PrintController::class, 'poHeaderView']);
 
     // Route for Forecast
     Route::get('/purchasing/forecast/index/{bp_code}', [ForecastController::class,"indexPurchasing"]);
