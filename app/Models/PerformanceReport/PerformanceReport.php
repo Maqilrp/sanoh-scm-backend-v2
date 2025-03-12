@@ -31,7 +31,7 @@ class PerformanceReport extends Model
     ];
 
     // Relationship
-    public function listingreport(): BelongsTo
+    public function partner(): BelongsTo
     {
         return $this->belongsTo(BusinessPartner::class, 'bp_code', 'bp_code');
     }

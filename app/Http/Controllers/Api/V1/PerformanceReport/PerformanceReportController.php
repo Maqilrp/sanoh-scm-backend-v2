@@ -34,7 +34,7 @@ class PerformanceReportController extends Controller
             $bp_code = $bp_code->bp_code;
         }
 
-        $data_listingreport = PerformanceReport::with('listingreport')
+        $data_listingreport = PerformanceReport::with('partner')
             ->where('bp_code', $bp_code)
             ->orderBy('date', 'desc')
             ->get();
@@ -48,7 +48,7 @@ class PerformanceReportController extends Controller
 
     public function indexAll()
     {
-        $data_listingreport = PerformanceReport::with('listingreport')->get();
+        $data_listingreport = PerformanceReport::with('partner')->get();
 
         return response()->json([
             'success' => true,
