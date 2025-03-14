@@ -1,26 +1,47 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
+use App\Http\Controllers\Api\V1\PrintController;
+use App\Http\Controllers\Api\V1\HistoryController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\User\AuthController;
+use App\Http\Controllers\Api\V1\User\UserController;
+use App\Http\Controllers\Api\V1\Forecast\ForecastController;
+use App\Http\Controllers\Api\V1\Syncronization\SyncController;
+use App\Http\Controllers\Api\V1\User\BusinessPartnerController;
 use App\Http\Controllers\Api\V1\DeliveryNote\DnDetailController;
 use App\Http\Controllers\Api\V1\DeliveryNote\DnHeaderController;
-use App\Http\Controllers\Api\V1\Email\EmailNotificationSupplierController;
-use App\Http\Controllers\Api\V1\Forecast\ForecastController;
-use App\Http\Controllers\Api\V1\HistoryController;
-use App\Http\Controllers\Api\V1\PerformanceReport\PerformanceReportController;
-use App\Http\Controllers\Api\V1\PrintController;
+use App\Http\Controllers\Api\V1\Subcontractor\SubcontController;
 use App\Http\Controllers\Api\V1\PurchaseOrder\PoDetailController;
 use App\Http\Controllers\Api\V1\PurchaseOrder\PoHeaderController;
-use App\Http\Controllers\Api\V1\Subcontractor\SubcontController;
-use App\Http\Controllers\Api\V1\Subcontractor\SubcontReceiveController;
-use App\Http\Controllers\Api\V1\Syncronization\SyncController;
 use App\Http\Controllers\Api\V1\Syncronization\SyncManualController;
-use App\Http\Controllers\Api\V1\User\AuthController;
-use App\Http\Controllers\Api\V1\User\BusinessPartnerController;
-use App\Http\Controllers\Api\V1\User\UserController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\V1\Subcontractor\SubcontReceiveController;
+use App\Http\Controllers\Api\V1\Email\EmailNotificationSupplierController;
+use App\Http\Controllers\Api\V1\PerformanceReport\PerformanceReportController;
 
 // Route Login
 Route::post('/login', [AuthController::class, 'login']);
+
+// backup
+Route::get('/backup', function () {
+
+    try {
+        Artisan::call('backup:run');
+
+        $output = Artisan::output();
+
+        return response()->json([
+            'message' => "Backup Successfully",
+            'data' => $output
+        ],201);
+    } catch (\Throwable $th) {
+        return response()->json([
+            'message' => "Backup Failed",
+            'error' => $th
+        ],500);
+    }
+});
 
 // move email
 Route::get('/move', [UserController::class, 'moveEmail']);
