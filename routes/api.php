@@ -190,7 +190,7 @@ Route::middleware(['auth:sanctum', 'userRole:4'])->prefix('admin-subcont')->grou
     // Route for admin get all list item user based on bp_code
     Route::get('item/all-list/{bp_code}', [SubcontController::class, 'adminGetAllItem']);
     // Route for get index subcont item (include stock)
-    Route::get('item/index/{bp_code}', [SubcontController::class, 'indexItem']);
+    Route::get('item/index/{bp_code}', [SubcontController::class, 'getStockById']);
     // Route for store subcont item
     Route::post('item/store', [SubcontController::class, 'createItem']);
     // Route for import stock subcont item
@@ -359,7 +359,7 @@ Route::middleware(['auth:sanctum', 'userRole:6'])->prefix('supplier-subcont-mark
     // Route for get list subcont item
     Route::get('item/list', [SubcontController::class, 'getListItem']);
     // Route for get index subcont item (include stock)
-    Route::get('item/index/{param?}', [SubcontController::class, 'indexItem']);
+    Route::get('item/index/{param?}', [SubcontController::class, 'getStockById']);
     // Route for get index subcont transaction
     Route::get('transaction/index', [SubcontController::class, 'indexTrans']);
     // Route for store subcont transaction
@@ -433,7 +433,7 @@ Route::middleware(['auth:sanctum', 'userRole:8'])->prefix('supplier-subcont')->g
     // Route for get list subcont item
     Route::get('item/list', [SubcontController::class, 'getListItem']);
     // Route for get index subcont item (include stock)
-    Route::get('item/index/{param?}', [SubcontController::class, 'indexItem']);
+    Route::get('item/index/{param?}', [SubcontController::class, 'getStockById']);
     // Route for get index subcont transaction
     Route::get('transaction/index', [SubcontController::class, 'indexTrans']);
     // Route for store subcont transaction
@@ -543,7 +543,7 @@ Route::middleware(['auth:sanctum', 'userRole:9'])->prefix('super-user')->group(f
     // Route for admin get all list item user based on bp_code
     Route::get('item/all-list/{bp_code}', [SubcontController::class, 'adminGetAllItem']);
     // Route for get index subcont item (include stock)
-    Route::get('item/index/{bp_code}', [SubcontController::class, 'indexItem']);
+    Route::get('item/index/{bp_code}', [SubcontController::class, 'getStockById']);
     // Route for store subcont item
     Route::post('item/store', [SubcontController::class, 'createItem']);
     // Route for import stock subcont item

@@ -2,23 +2,36 @@
 
 namespace App\Http\Controllers\Api\V1\Subcontractor;
 
-use App\Http\Requests\Subcontractor\SubcontImportStockItemRequest;
-use App\Http\Requests\Subcontractor\SubcontItemRequest;
-use App\Http\Requests\Subcontractor\SubcontItemUpdateRequest;
-use App\Http\Requests\Subcontractor\SubcontTransactionRequest;
-use App\Service\Subcontractor\SubcontCreateItem;
-use App\Service\Subcontractor\SubcontCreateTransaction;
-use App\Service\Subcontractor\SubcontDeleteItem;
+use Auth;
+use App\Trait\ResponseApi;
+use Illuminate\Http\Request;
+use App\Trait\AuthorizationRole;
+use App\Models\Subcontractor\SubcontItem;
 use App\Service\Subcontractor\SubcontGetItem;
+use App\Service\Subcontractor\SubcontCreateItem;
+use App\Service\Subcontractor\SubcontDeleteItem;
+use App\Service\Subcontractor\SubcontUpdateItem;
 use App\Service\Subcontractor\SubcontGetListItem;
 use App\Service\Subcontractor\SubcontGetListItemErp;
 use App\Service\Subcontractor\SubcontGetTransaction;
 use App\Service\Subcontractor\SubcontImportStockItem;
-use App\Service\Subcontractor\SubcontUpdateItem;
-use Illuminate\Http\Request;
+use App\Http\Requests\Subcontractor\SubcontItemRequest;
+use App\Service\Subcontractor\SubcontCreateTransaction;
+use App\Http\Resources\Subcontractor\SubcontItemResource;
+use App\Http\Requests\Subcontractor\SubcontItemUpdateRequest;
+use App\Http\Requests\Subcontractor\SubcontTransactionRequest;
+use App\Http\Requests\Subcontractor\SubcontImportStockItemRequest;
 
 class SubcontController
 {
+    /**
+     * -------TRAIT---------
+     * Mandatory:
+     * 1. ResponseApi = Response api should use ResponseApi trait template
+     * 2. AuthorizationRole = for checking permissible user role
+     */
+    use AuthorizationRole, ResponseApi;
+
     public function __construct(
         protected SubcontGetItem $subcontGetItem,
         protected SubcontGetTransaction $subcontGetTransaction,
@@ -29,25 +42,36 @@ class SubcontController
         protected SubcontUpdateItem $subcontUpdateItem,
         protected SubcontDeleteItem $subcontDeleteItem,
         protected SubcontImportStockItem $subcontImportStockItem,
-    ) {}
+    ) {
+    }
 
     /**
-     * To get item record user
-     *
+     * Get subcont stock based on BP Code
+     * @param mixed $bpCode
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function indexItem(Request $param)
+    public function getStockById($bpCode = null)
     {
-        try {
-            $result = $this->subcontGetItem->getAllItemSubcont($param ?? null);
-        } catch (\Exception $ex) {
-            return response()->json([
-                'status' => 'Failed',
-                'error' => "{$ex->getMessage()} (On line {$ex->getLine()}) {$ex->getFile()}",
-            ], 500);
+        if ($this->permissibleRole('6', '8')) {
+            $bpCode = Auth::user()->bp_code;
+        } elseif ($this->permissibleRole('4', '9')) {
+            $bpCode;
         }
 
-        return $result;
+        $data = SubcontItem::with('subStock')
+            ->where('bp_code', $bpCode)
+            ->orderBy('item_code', 'asc')
+            ->get();
+        if ($data->isEmpty()) {
+            return $this->returnResponseApi(true, 'Subcont Item Data Not Found', [], 200);
+        }
+
+        return $this->returnResponseApi(
+            true,
+            'Display List Subcont Item Successfully',
+            SubcontItemResource::collection($data),
+            200
+        );
     }
 
     /**
@@ -80,7 +104,7 @@ class SubcontController
         } catch (\Throwable $th) {
             return response()->json([
                 'status' => false,
-                'error' => $th->getMessage().' (On line '.$th->getLine().')',
+                'error' => $th->getMessage() . ' (On line ' . $th->getLine() . ')',
             ], 500);
         }
 
@@ -94,7 +118,7 @@ class SubcontController
         } catch (\Throwable $th) {
             return response()->json([
                 'status' => false,
-                'error' => $th->getMessage().' (On line '.$th->getLine().')',
+                'error' => $th->getMessage() . ' (On line ' . $th->getLine() . ')',
             ], 500);
         }
 
@@ -113,7 +137,7 @@ class SubcontController
         } catch (\Throwable $th) {
             return response()->json([
                 'status' => false,
-                'error' => $th->getMessage().' (On line '.$th->getLine().')',
+                'error' => $th->getMessage() . ' (On line ' . $th->getLine() . ')',
             ], 500);
         }
 
