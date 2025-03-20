@@ -15,16 +15,9 @@ use App\Models\Subcontractor\SubcontItem;
 use App\Models\Subcontractor\SubcontItemErp;
 use App\Models\Subcontractor\SubcontStock;
 use App\Models\Subcontractor\SubcontTransaction;
-use App\Service\Subcontractor\SubcontCreateItem;
 use App\Service\Subcontractor\SubcontCreateStock;
 use App\Service\Subcontractor\SubcontCreateTransaction;
-use App\Service\Subcontractor\SubcontDeleteItem;
-use App\Service\Subcontractor\SubcontGetItem;
-use App\Service\Subcontractor\SubcontGetListItem;
-use App\Service\Subcontractor\SubcontGetListItemErp;
-use App\Service\Subcontractor\SubcontGetTransaction;
 use App\Service\Subcontractor\SubcontImportStockItem;
-use App\Service\Subcontractor\SubcontUpdateItem;
 use App\Trait\AuthorizationRole;
 use App\Trait\ResponseApi;
 use Auth;
@@ -41,14 +34,7 @@ class SubcontController
     use AuthorizationRole, ResponseApi;
 
     public function __construct(
-        protected SubcontGetItem $subcontGetItem,
-        protected SubcontGetTransaction $subcontGetTransaction,
-        protected SubcontCreateItem $subcontCreateItem,
         protected SubcontCreateTransaction $subcontCreateTransaction,
-        protected SubcontGetListItem $subcontGetListItem,
-        protected SubcontGetListItemErp $subcontGetListItemErp,
-        protected SubcontUpdateItem $subcontUpdateItem,
-        protected SubcontDeleteItem $subcontDeleteItem,
         protected SubcontImportStockItem $subcontImportStockItem,
         protected SubcontCreateStock $subcontCreateStock,
     ) {}
