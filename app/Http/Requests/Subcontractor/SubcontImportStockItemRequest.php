@@ -24,6 +24,7 @@ class SubcontImportStockItemRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'data' => 'required|array',
             'data.*.bp_code' => 'required|string',
             'data.*.part_number' => 'required|string',
             'data.*.fresh_unprocess_incoming_items' => 'required|integer|min:0',

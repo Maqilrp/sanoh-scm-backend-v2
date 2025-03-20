@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers\Api\V1\Subcontractor;
 
-use App\Service\Subcontractor\SubcontCreateStock;
 use Auth;
 use App\Trait\ResponseApi;
 use Illuminate\Http\Request;
 use App\Trait\AuthorizationRole;
 use App\Models\Subcontractor\SubcontItem;
+use App\Models\Subcontractor\SubcontStock;
 use App\Models\Subcontractor\SubcontItemErp;
 use App\Service\Subcontractor\SubcontGetItem;
 use App\Models\Subcontractor\SubcontTransaction;
 use App\Service\Subcontractor\SubcontCreateItem;
 use App\Service\Subcontractor\SubcontDeleteItem;
 use App\Service\Subcontractor\SubcontUpdateItem;
+use App\Service\Subcontractor\SubcontCreateStock;
 use App\Service\Subcontractor\SubcontGetListItem;
 use App\Service\Subcontractor\SubcontGetListItemErp;
 use App\Service\Subcontractor\SubcontGetTransaction;
@@ -55,7 +56,6 @@ class SubcontController
 
     /**
      * Get list item from ERP
-     *
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function getListItemErp()
@@ -75,10 +75,10 @@ class SubcontController
 
     /**
      * Get list item user
-     *
+     * @param string $bpCode
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getListItem($bpCode = null)
+    public function getListItem(string $bpCode = null)
     {
         if ($this->permissibleRole('6', '8')) {
             $bpCode = Auth::user()->bp_code;
@@ -105,10 +105,10 @@ class SubcontController
 
     /**
      * Get list item for admin subcont (feat: manage-items)
-     * @param mixed $bpCode
+     * @param string $bpCode
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getListItemAdmin($bpCode = null)
+    public function getListItemAdmin(string $bpCode = null)
     {
         $data = SubcontItem::select('sub_item_id', 'item_code', 'item_name', 'item_old_name', 'status')
             ->where('bp_code', $bpCode)
@@ -128,10 +128,10 @@ class SubcontController
 
     /**
      * Get subcont stock based on BP Code
-     * @param mixed $bpCode
+     * @param string $bpCode
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getStock($bpCode = null)
+    public function getStock(string $bpCode = null)
     {
         if ($this->permissibleRole('6', '8')) {
             $bpCode = Auth::user()->bp_code;
@@ -194,8 +194,8 @@ class SubcontController
     }
 
     /**
-     * Create new item
-     *
+     * Create subcont item
+     * @param \App\Http\Requests\Subcontractor\SubcontItemRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function createItem(SubcontItemRequest $request)
@@ -226,8 +226,8 @@ class SubcontController
     }
 
     /**
-     * Create new transaction
-     *
+     * Create transaction
+     * @param \App\Http\Requests\Subcontractor\SubcontTransactionRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function createTransaction(SubcontTransactionRequest $request)
@@ -250,42 +250,63 @@ class SubcontController
     }
 
     /**
-     * Summary of updateItem
-     *
+     * Update subcont item
+     * @param \App\Http\Requests\Subcontractor\SubcontItemUpdateRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function updateItem(SubcontItemUpdateRequest $request)
     {
-        try {
-            $result = $this->subcontUpdateItem->updateItem($request->validated());
-        } catch (\Throwable $ex) {
-            return response()->json([
-                'error' => $ex->getMessage(),
-            ], 500);
-        }
+        $request->validated();
 
-        return $result;
+        $item = SubcontItem::find($request->sub_item_id);
+        if ($item) {
+            return $this->returnResponseApi(false, 'Item Not Found', [], 404);
+        }
+        $item->update([
+            'item_code' => $request->part_number ?? $item->item_code,
+            'item_name' => $request->part_name ?? $item->item_name,
+            'item_old_name' => $request->old_part_name ?? $item->item_old_name,
+            'status' => $request->status ?? $item->status,
+        ]);
+
+       return $this->returnResponseApi(true, 'Update Item Successful', [], 200);
     }
 
-    public function deleteItem(SubcontItemUpdateRequest $request)
+    /**
+     * Delete subcont item
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function deleteItem(Request $request)
     {
-        try {
-            $result = $this->subcontDeleteItem->deleteItem($request->validated());
-        } catch (\Throwable $ex) {
-            return response()->json([
-                'error' => $ex->getMessage(),
-            ], 500);
+        $item = SubcontItem::find($request->sub_item_id, 'sub_item_id');
+        if (! $item) {
+            return $this->returnResponseApi(false, 'Item Not Found', null, 404);
         }
 
-        return $result;
+        $itemStock = SubcontStock::find($request->sub_item_id, 'sub_item_id');
+        if ($itemStock) {
+            return $this->returnResponseApi(false, 'Item Stock Not Found', null, 404);
+        }
+
+        \DB::transaction(function () use ($item, $itemStock) {
+            $item->delete();
+            $itemStock->delete();
+        });
+
+        return $this->returnResponseApi(true, 'Delete Item Successful', null, 200);
     }
 
+    /**
+     * Import stock from existing items
+     * @param \App\Http\Requests\Subcontractor\SubcontImportStockItemRequest $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
     public function importStockItems(SubcontImportStockItemRequest $request)
     {
-        // validated request data
-        $validateData = $request->validated();
+       $request->validated();
 
-        foreach ($validateData['data'] as $data) {
+        foreach ($request['data'] as $data) {
             $this->subcontImportStockItem->importStockItem(
                 $data['bp_code'],
                 $data['part_number'],
@@ -298,11 +319,6 @@ class SubcontController
             );
         }
 
-        // Response
-        return response()->json([
-            'status' => true,
-            'message' => 'Import Stock Items Successfully',
-        ], 200);
-
+        return $this->returnResponseApi(true, 'Import Stock Items Successfully', null, 200);
     }
 }
