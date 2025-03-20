@@ -26,6 +26,7 @@ class SubcontItemRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'data' => 'required|array',
             'data.*.bp_code' => 'required|string|max:50',
             'data.*.part_number' => 'required|string|max:50',
             'data.*.part_name' => 'string|max:255',

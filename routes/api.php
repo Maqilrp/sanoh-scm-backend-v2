@@ -188,7 +188,7 @@ Route::middleware(['auth:sanctum', 'userRole:4'])->prefix('admin-subcont')->grou
     // Route for get list item user
     Route::get('item/list/{bp_code}', [SubcontController::class, 'getListItem']);
     // Route for admin get all list item user based on bp_code
-    Route::get('item/all-list/{bp_code}', [SubcontController::class, 'adminGetAllItem']);
+    Route::get('item/all-list/{bp_code}', [SubcontController::class, 'getListItemAdmin']);
     // Route for get index subcont item (include stock)
     Route::get('item/index/{bp_code}', [SubcontController::class, 'getStock']);
     // Route for store subcont item
@@ -541,7 +541,7 @@ Route::middleware(['auth:sanctum', 'userRole:9'])->prefix('super-user')->group(f
     // Route for get list item user
     Route::get('item/list/{bp_code}', [SubcontController::class, 'getListItem']);
     // Route for admin get all list item user based on bp_code
-    Route::get('item/all-list/{bp_code}', [SubcontController::class, 'adminGetAllItem']);
+    Route::get('item/all-list/{bp_code}', [SubcontController::class, 'getListItemAdmin']);
     // Route for get index subcont item (include stock)
     Route::get('item/index/{bp_code}', [SubcontController::class, 'getStock']);
     // Route for store subcont item
