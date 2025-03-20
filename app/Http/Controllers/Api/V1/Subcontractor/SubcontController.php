@@ -2,33 +2,33 @@
 
 namespace App\Http\Controllers\Api\V1\Subcontractor;
 
-use Auth;
-use App\Trait\ResponseApi;
-use Illuminate\Http\Request;
-use App\Trait\AuthorizationRole;
+use App\Http\Requests\Subcontractor\SubcontImportStockItemRequest;
+use App\Http\Requests\Subcontractor\SubcontItemRequest;
+use App\Http\Requests\Subcontractor\SubcontItemUpdateRequest;
+use App\Http\Requests\Subcontractor\SubcontTransactionRequest;
+use App\Http\Resources\Subcontractor\SubcontAllListItemResource;
+use App\Http\Resources\Subcontractor\SubcontItemResource;
+use App\Http\Resources\Subcontractor\SubcontListItemErpResource;
+use App\Http\Resources\Subcontractor\SubcontListItemResource;
+use App\Http\Resources\Subcontractor\SubcontTransactionResource;
 use App\Models\Subcontractor\SubcontItem;
-use App\Models\Subcontractor\SubcontStock;
 use App\Models\Subcontractor\SubcontItemErp;
-use App\Service\Subcontractor\SubcontGetItem;
+use App\Models\Subcontractor\SubcontStock;
 use App\Models\Subcontractor\SubcontTransaction;
 use App\Service\Subcontractor\SubcontCreateItem;
-use App\Service\Subcontractor\SubcontDeleteItem;
-use App\Service\Subcontractor\SubcontUpdateItem;
 use App\Service\Subcontractor\SubcontCreateStock;
+use App\Service\Subcontractor\SubcontCreateTransaction;
+use App\Service\Subcontractor\SubcontDeleteItem;
+use App\Service\Subcontractor\SubcontGetItem;
 use App\Service\Subcontractor\SubcontGetListItem;
 use App\Service\Subcontractor\SubcontGetListItemErp;
 use App\Service\Subcontractor\SubcontGetTransaction;
 use App\Service\Subcontractor\SubcontImportStockItem;
-use App\Http\Requests\Subcontractor\SubcontItemRequest;
-use App\Service\Subcontractor\SubcontCreateTransaction;
-use App\Http\Resources\Subcontractor\SubcontItemResource;
-use App\Http\Requests\Subcontractor\SubcontItemUpdateRequest;
-use App\Http\Resources\Subcontractor\SubcontListItemResource;
-use App\Http\Requests\Subcontractor\SubcontTransactionRequest;
-use App\Http\Resources\Subcontractor\SubcontAllListItemResource;
-use App\Http\Resources\Subcontractor\SubcontListItemErpResource;
-use App\Http\Resources\Subcontractor\SubcontTransactionResource;
-use App\Http\Requests\Subcontractor\SubcontImportStockItemRequest;
+use App\Service\Subcontractor\SubcontUpdateItem;
+use App\Trait\AuthorizationRole;
+use App\Trait\ResponseApi;
+use Auth;
+use Illuminate\Http\Request;
 
 class SubcontController
 {
@@ -51,11 +51,11 @@ class SubcontController
         protected SubcontDeleteItem $subcontDeleteItem,
         protected SubcontImportStockItem $subcontImportStockItem,
         protected SubcontCreateStock $subcontCreateStock,
-    ) {
-    }
+    ) {}
 
     /**
      * Get list item from ERP
+     *
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function getListItemErp()
@@ -75,15 +75,15 @@ class SubcontController
 
     /**
      * Get list item user
-     * @param string $bpCode
+     *
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getListItem(string $bpCode = null)
+    public function getListItem(?string $bpCode = null)
     {
         if ($this->permissibleRole('6', '8')) {
             $bpCode = Auth::user()->bp_code;
         } elseif ($this->permissibleRole('4', '9')) {
-            $bpCode;
+
         }
 
         $data = SubcontItem::select('item_code', 'item_name', 'item_old_name')
@@ -105,10 +105,10 @@ class SubcontController
 
     /**
      * Get list item for admin subcont (feat: manage-items)
-     * @param string $bpCode
+     *
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getListItemAdmin(string $bpCode = null)
+    public function getListItemAdmin(?string $bpCode = null)
     {
         $data = SubcontItem::select('sub_item_id', 'item_code', 'item_name', 'item_old_name', 'status')
             ->where('bp_code', $bpCode)
@@ -128,15 +128,15 @@ class SubcontController
 
     /**
      * Get subcont stock based on BP Code
-     * @param string $bpCode
+     *
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getStock(string $bpCode = null)
+    public function getStock(?string $bpCode = null)
     {
         if ($this->permissibleRole('6', '8')) {
             $bpCode = Auth::user()->bp_code;
         } elseif ($this->permissibleRole('4', '9')) {
-            $bpCode;
+
         }
 
         $data = SubcontItem::with('subStock')
@@ -158,7 +158,7 @@ class SubcontController
     /**
      * Get subcont transaction based on bp_code, start_date, and end_date.
      * start and end date is the range of subcont transaction you want return
-     * @param \Illuminate\Http\Request $request
+     *
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function getListTrans(Request $request)
@@ -171,7 +171,7 @@ class SubcontController
         if ($this->permissibleRole('6', '8')) {
             $bpCode = Auth::user()->bp_code;
         } elseif ($this->permissibleRole('4', '9')) {
-            $bpCode;
+
         }
 
         $data = SubcontTransaction::whereHas('subItem', function ($q) use ($bpCode) {
@@ -195,7 +195,7 @@ class SubcontController
 
     /**
      * Create subcont item
-     * @param \App\Http\Requests\Subcontractor\SubcontItemRequest $request
+     *
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function createItem(SubcontItemRequest $request)
@@ -227,7 +227,7 @@ class SubcontController
 
     /**
      * Create transaction
-     * @param \App\Http\Requests\Subcontractor\SubcontTransactionRequest $request
+     *
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function createTransaction(SubcontTransactionRequest $request)
@@ -251,7 +251,7 @@ class SubcontController
 
     /**
      * Update subcont item
-     * @param \App\Http\Requests\Subcontractor\SubcontItemUpdateRequest $request
+     *
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function updateItem(SubcontItemUpdateRequest $request)
@@ -269,12 +269,12 @@ class SubcontController
             'status' => $request->status ?? $item->status,
         ]);
 
-       return $this->returnResponseApi(true, 'Update Item Successful', [], 200);
+        return $this->returnResponseApi(true, 'Update Item Successful', [], 200);
     }
 
     /**
      * Delete subcont item
-     * @param \Illuminate\Http\Request $request
+     *
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function deleteItem(Request $request)
@@ -299,12 +299,12 @@ class SubcontController
 
     /**
      * Import stock from existing items
-     * @param \App\Http\Requests\Subcontractor\SubcontImportStockItemRequest $request
+     *
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function importStockItems(SubcontImportStockItemRequest $request)
     {
-       $request->validated();
+        $request->validated();
 
         foreach ($request['data'] as $data) {
             $this->subcontImportStockItem->importStockItem(
