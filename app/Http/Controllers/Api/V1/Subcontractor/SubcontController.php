@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Trait\AuthorizationRole;
 use App\Models\Subcontractor\SubcontItem;
 use App\Service\Subcontractor\SubcontGetItem;
+use App\Models\Subcontractor\SubcontTransaction;
 use App\Service\Subcontractor\SubcontCreateItem;
 use App\Service\Subcontractor\SubcontDeleteItem;
 use App\Service\Subcontractor\SubcontUpdateItem;
@@ -20,6 +21,7 @@ use App\Service\Subcontractor\SubcontCreateTransaction;
 use App\Http\Resources\Subcontractor\SubcontItemResource;
 use App\Http\Requests\Subcontractor\SubcontItemUpdateRequest;
 use App\Http\Requests\Subcontractor\SubcontTransactionRequest;
+use App\Http\Resources\Subcontractor\SubcontTransactionResource;
 use App\Http\Requests\Subcontractor\SubcontImportStockItemRequest;
 
 class SubcontController
@@ -46,46 +48,18 @@ class SubcontController
     }
 
     /**
-     * Get subcont stock based on BP Code
-     * @param mixed $bpCode
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function getStockById($bpCode = null)
-    {
-        if ($this->permissibleRole('6', '8')) {
-            $bpCode = Auth::user()->bp_code;
-        } elseif ($this->permissibleRole('4', '9')) {
-            $bpCode;
-        }
-
-        $data = SubcontItem::with('subStock')
-            ->where('bp_code', $bpCode)
-            ->orderBy('item_code', 'asc')
-            ->get();
-        if ($data->isEmpty()) {
-            return $this->returnResponseApi(true, 'Subcont Item Data Not Found', [], 200);
-        }
-
-        return $this->returnResponseApi(
-            true,
-            'Display List Subcont Item Successfully',
-            SubcontItemResource::collection($data),
-            200
-        );
-    }
-
-    /**
-     * to get transaction record user
+     * Summary of getListItemErp
      *
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function indexTrans(Request $request)
+    public function getListItemErp()
     {
         try {
-            $result = $this->subcontGetTransaction->getAllTransactionSubcont($request->start_date ?? null, $request->end_date ?? null, $request->bp_code ?? null);
-        } catch (\Exception $ex) {
+            $result = $this->subcontGetListItemErp->getListErp();
+        } catch (\Throwable $th) {
             return response()->json([
-                'error' => $ex->getMessage(),
+                'status' => false,
+                'error' => $th->getMessage() . ' (On line ' . $th->getLine() . ')',
             ], 500);
         }
 
@@ -126,22 +100,70 @@ class SubcontController
     }
 
     /**
-     * Summary of getListItemErp
-     *
+     * Get subcont stock based on BP Code
+     * @param mixed $bpCode
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getListItemErp()
+    public function getStock($bpCode = null)
     {
-        try {
-            $result = $this->subcontGetListItemErp->getListErp();
-        } catch (\Throwable $th) {
-            return response()->json([
-                'status' => false,
-                'error' => $th->getMessage() . ' (On line ' . $th->getLine() . ')',
-            ], 500);
+        if ($this->permissibleRole('6', '8')) {
+            $bpCode = Auth::user()->bp_code;
+        } elseif ($this->permissibleRole('4', '9')) {
+            $bpCode;
         }
 
-        return $result;
+        $data = SubcontItem::with('subStock')
+            ->where('bp_code', $bpCode)
+            ->orderBy('item_code', 'asc')
+            ->get();
+        if ($data->isEmpty()) {
+            return $this->returnResponseApi(true, 'Subcont Item Data Not Found', [], 200);
+        }
+
+        return $this->returnResponseApi(
+            true,
+            'Display List Subcont Item Successfully',
+            SubcontItemResource::collection($data),
+            200
+        );
+    }
+
+    /**
+     * Get subcont transaction based on bp_code, start_date, and end_date.
+     * start and end date is the range of subcont transaction you want return
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function getListTrans(Request $request)
+    {
+        // Declare variable
+        $bpCode = $request->bp_code ?? null;
+        $startDate = $request->start_date ?? null;
+        $endDate = $request->end_date ?? null;
+
+        if ($this->permissibleRole('6', '8')) {
+            $bpCode = Auth::user()->bp_code;
+        } elseif ($this->permissibleRole('4', '9')) {
+            $bpCode;
+        }
+
+        $data = SubcontTransaction::whereHas('subItem', function ($q) use ($bpCode) {
+            $q->where('bp_code', $bpCode);
+        })
+            ->whereBetween('transaction_date', [$startDate, $endDate])
+            ->orderBy('transaction_date', 'desc')
+            ->orderBy('transaction_time', 'desc')
+            ->get();
+        if ($data->isEmpty()) {
+            return $this->returnResponseApi(true, 'Subcont Transaction Data Not Found', [], 200);
+        }
+
+        return $this->returnResponseApi(
+            true,
+            'Display List Subcont Transaction Successfully',
+            SubcontTransactionResource::collection($data),
+            200
+        );
     }
 
     /**
@@ -161,6 +183,30 @@ class SubcontController
         //     ], 500);
         // }
         return $result;
+    }
+
+    /**
+     * Create new transaction
+     *
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function createTransaction(SubcontTransactionRequest $request)
+    {
+        $result = $this->subcontCreateTransaction->createTransactionSubcont($request->validated());
+
+        // Return response
+        if ($result == true) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Data Successfully Stored',
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'Request data format error',
+            ], 422);
+        }
+
     }
 
     /**
@@ -192,30 +238,6 @@ class SubcontController
         }
 
         return $result;
-    }
-
-    /**
-     * Create new transaction
-     *
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function createTransaction(SubcontTransactionRequest $request)
-    {
-        $result = $this->subcontCreateTransaction->createTransactionSubcont($request->validated());
-
-        // Return response
-        if ($result == true) {
-            return response()->json([
-                'status' => true,
-                'message' => 'Data Successfully Stored',
-            ], 200);
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => 'Request data format error',
-            ], 422);
-        }
-
     }
 
     public function importStockItems(SubcontImportStockItemRequest $request)
