@@ -7,6 +7,7 @@ use App\Trait\ResponseApi;
 use Illuminate\Http\Request;
 use App\Trait\AuthorizationRole;
 use App\Models\Subcontractor\SubcontItem;
+use App\Models\Subcontractor\SubcontItemErp;
 use App\Service\Subcontractor\SubcontGetItem;
 use App\Models\Subcontractor\SubcontTransaction;
 use App\Service\Subcontractor\SubcontCreateItem;
@@ -21,6 +22,7 @@ use App\Service\Subcontractor\SubcontCreateTransaction;
 use App\Http\Resources\Subcontractor\SubcontItemResource;
 use App\Http\Requests\Subcontractor\SubcontItemUpdateRequest;
 use App\Http\Requests\Subcontractor\SubcontTransactionRequest;
+use App\Http\Resources\Subcontractor\SubcontListItemErpResource;
 use App\Http\Resources\Subcontractor\SubcontTransactionResource;
 use App\Http\Requests\Subcontractor\SubcontImportStockItemRequest;
 
@@ -48,22 +50,23 @@ class SubcontController
     }
 
     /**
-     * Summary of getListItemErp
+     * Get list item from ERP
      *
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function getListItemErp()
     {
-        try {
-            $result = $this->subcontGetListItemErp->getListErp();
-        } catch (\Throwable $th) {
-            return response()->json([
-                'status' => false,
-                'error' => $th->getMessage() . ' (On line ' . $th->getLine() . ')',
-            ], 500);
+        $data = SubcontItemErp::select('item', 'description', 'old_item')->get();
+        if ($data->isEmpty()) {
+            return $this->returnResponseApi(true, 'Subcont Item Data Not Found', [], 200);
         }
 
-        return $result;
+        return $this->returnResponseApi(
+            true,
+            'Display List Subcont Item Successfully',
+            SubcontListItemErpResource::collection($data),
+            200
+        );
     }
 
     /**
