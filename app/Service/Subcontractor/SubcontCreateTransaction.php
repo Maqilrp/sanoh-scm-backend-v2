@@ -146,7 +146,7 @@ class SubcontCreateTransaction
     /**
      * Summary of createSubcontTransactionDifference
      */
-    public function createSubcontTransactionDifference(string $subTransactionId, int $subItemId, int $actualQtyOk, int $actualQtyNg)
+    public function createSubcontTransactionReview(string $subTransactionId, int $subItemId, int $actualQtyOk, int $actualQtyNg)
     {
         if ($this->permissibleRole('4', '9')) {
         } else {

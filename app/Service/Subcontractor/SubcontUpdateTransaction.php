@@ -2,27 +2,34 @@
 
 namespace App\Service\Subcontractor;
 
-use App\Models\Subcontractor\SubcontTransaction;
+use App\Trait\ErrorLog;
+use App\Trait\ResponseApi;
+use App\Trait\AuthorizationRole;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Subcontractor\SubcontTransaction;
 
 class SubcontUpdateTransaction
 {
-    public function updateTransaction(
-        int $subTransactionId,
-        int $actualQtyOk,
-        int $actualQtyNg,
-    ) {
-        // Check user role
-        $check = Auth::user()->role;
+    /**
+     * -------TRAIT---------
+     * Mandatory:
+     * 1. ResponseApi = Response api should use ResponseApi trait template
+     * 2. AuthorizationRole = for checking permissible user role
+     */
+    use AuthorizationRole, ResponseApi;
 
-        if ($check == 4 || $check == 9) {
+    public function updateTransaction(int $subTransactionId, int $actualQtyOk, int $actualQtyNg)
+    {
+        if ($this->permissibleRole('4', '9')) {
         } else {
-            throw new \Exception('User Forbidden', 403);
+            return $this->returnResponseApi(false, 'User Unauthorized', null, 401);
         }
 
         try {
-            // Update record transaction
-            $findRecord = SubcontTransaction::findOrFail($subTransactionId);
+            $findRecord = SubcontTransaction::find($subTransactionId);
+            if (! $findRecord) {
+                return $this->returnResponseApi(false, 'Subcont Transaction Not Found', null, 404);
+            }
 
             $findRecord->update([
                 'actual_qty_ok_receive' => $actualQtyOk,
@@ -30,16 +37,9 @@ class SubcontUpdateTransaction
                 'response' => 'Receipt',
             ]);
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Transaction Update Successfully',
-            ], 200);
-
+            return $this->returnResponseApi(true, 'Subcont Transaction Update Successfully', null, 200);
         } catch (\Throwable $th) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Request data format error',
-            ], 422);
+            return $this->returnResponseApi(false, 'Request data format error', null, 422);
         }
     }
 }
