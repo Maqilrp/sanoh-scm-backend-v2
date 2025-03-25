@@ -127,6 +127,17 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        'sync' => [
+            'driver' => 'single',
+            'level' => 'debug',
+            'path' => storage_path('logs/sync.log'),
+        ],
+
+        'logic' => [
+            'driver' => 'single',
+            'level' => 'debug',
+            'path' => storage_path('logs/logic.log'),
+        ],
     ],
 
 ];

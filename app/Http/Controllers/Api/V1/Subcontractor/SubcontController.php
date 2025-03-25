@@ -37,7 +37,8 @@ class SubcontController
         protected SubcontCreateTransaction $subcontCreateTransaction,
         protected SubcontImportStockItem $subcontImportStockItem,
         protected SubcontCreateStock $subcontCreateStock,
-    ) {}
+    ) {
+    }
 
     /**
      * Get list item from ERP
@@ -61,7 +62,7 @@ class SubcontController
 
     /**
      * Get list item user
-     *
+     * @param mixed $bpCode
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function getListItem(?string $bpCode = null)
@@ -91,10 +92,10 @@ class SubcontController
 
     /**
      * Get list item for admin subcont (feat: manage-items)
-     *
+     * @param mixed $bpCode
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getListItemAdmin(?string $bpCode = null)
+    public function getListItemAdmin(string $bpCode = null)
     {
         $data = SubcontItem::select('sub_item_id', 'item_code', 'item_name', 'item_old_name', 'status')
             ->where('bp_code', $bpCode)
@@ -114,7 +115,7 @@ class SubcontController
 
     /**
      * Get subcont stock based on BP Code
-     *
+     * @param mixed $bpCode
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function getStock(?string $bpCode = null)
@@ -145,6 +146,7 @@ class SubcontController
      * Get subcont transaction based on bp_code, start_date, and end_date.
      * start and end date is the range of subcont transaction you want return
      *
+     * @param \Illuminate\Http\Request $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function getListTrans(Request $request)
@@ -181,7 +183,7 @@ class SubcontController
 
     /**
      * Create subcont item
-     *
+     * @param \App\Http\Requests\Subcontractor\SubcontItemRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function createItem(SubcontItemRequest $request)
@@ -192,7 +194,7 @@ class SubcontController
             $item = SubcontItemErp::select('description', 'old_item')
                 ->where('item', $d['part_number'])
                 ->first();
-            if (! $item) {
+            if (!$item) {
                 return $this->returnResponseApi(false, 'Item Not Found', [], 404);
             }
 
@@ -213,7 +215,7 @@ class SubcontController
 
     /**
      * Create transaction
-     *
+     * @param \App\Http\Requests\Subcontractor\SubcontTransactionRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function createTransaction(SubcontTransactionRequest $request)
@@ -266,7 +268,7 @@ class SubcontController
     public function deleteItem(Request $request)
     {
         $item = SubcontItem::find($request->sub_item_id, 'sub_item_id');
-        if (! $item) {
+        if (!$item) {
             return $this->returnResponseApi(false, 'Item Not Found', null, 404);
         }
 
