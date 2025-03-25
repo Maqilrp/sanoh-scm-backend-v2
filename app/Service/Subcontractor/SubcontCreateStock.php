@@ -2,13 +2,20 @@
 
 namespace App\Service\Subcontractor;
 
+use App\Trait\ErrorLog;
+use App\Trait\ResponseApi;
 use App\Models\Subcontractor\SubcontStock;
-use Carbon\Carbon;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Support\Facades\Log;
 
 class SubcontCreateStock
 {
+    /**
+     * -------TRAIT---------
+     * Mandatory:
+     * 1. ResponseApi = Response api should use ResponseApi trait template
+     * 2. ErrorLog = Make internal log and return RequestId if the logic error was critical
+     */
+    use ResponseApi, ErrorLog;
+
     /**
      * Check the item stock record
      *
@@ -22,7 +29,6 @@ class SubcontCreateStock
             $checkAvaibility = SubcontStock::where('sub_item_id', $subItemId)
                 ->where('item_code', $item_code)
                 ->exists();
-
             if (! $checkAvaibility) {
                 SubcontStock::create([
                     'sub_item_id' => $subItemId,
@@ -36,27 +42,8 @@ class SubcontCreateStock
                 ]);
             }
         } catch (\Throwable $th) {
-            // Generate random request id
-            $randomReqId = 'error_'.Carbon::now()->format('Ymd;H:i:s').'_'.\Str::random(10);
-
-            // Log error to channel internal system error
-            Log::error("
-                Message => Generate Delivery Note error
-                Error => {$th->getMessage()},
-                File => {$th->getFile()},
-                Line => {$th->getLine()},
-                RequestId => $randomReqId,
-            ");
-
-            // Response
-            throw new HttpResponseException(
-                response()->json([
-                    'status' => false,
-                    'message' => "Internal error while checking stock item (Request_id:$randomReqId)",
-                    'error' => "Internal error while checking stock item (Request_id:$randomReqId)",
-                ], 500)
-            );
-
+            $requestId = $this->logicError('Error Create And Check Subcont Stock', $th->getMessage(), $th->getFile(), $th->getLine());
+            return $this->returnResponseApi(false, "Internal error while checking stock item (Request_id:$requestId)", null, 500);
         }
 
         return true;

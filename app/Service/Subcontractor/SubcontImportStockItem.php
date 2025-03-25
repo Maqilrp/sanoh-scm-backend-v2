@@ -22,6 +22,18 @@ class SubcontImportStockItem
     use ResponseApi, ErrorLog;
     public function __construct(protected SubcontCreateStock $subcontCreateStock){}
 
+    /**
+     * Create Or Update Subcont items and stock from ERP. via excel
+     * @param string $bpCode
+     * @param string $partNumber
+     * @param int $freshIncomingItems
+     * @param int $freshProcessItems
+     * @param int $freshNgItems
+     * @param int $replatingIncomingItems
+     * @param int $replatingProcessItems
+     * @param int $replatingNgItems
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
     public function importStockItem(
         string $bpCode,
         string $partNumber,

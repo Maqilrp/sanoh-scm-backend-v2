@@ -2,10 +2,8 @@
 
 namespace App\Service\Subcontractor;
 
-use App\Trait\ErrorLog;
 use App\Trait\ResponseApi;
 use App\Trait\AuthorizationRole;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Subcontractor\SubcontTransaction;
 
 class SubcontUpdateTransaction
